@@ -133,13 +133,13 @@ cc-connect feishu bind --app <app_id:app_secret>
 在 `cc-connect.toml` 里重点确认：
 
 ```text
-project.name
-projects.agent.type
-projects.agent.options.work_dir
-projects.platforms.type
-projects.platforms.options.app_id
-projects.platforms.options.app_secret
-projects.platforms.options.allow_from
+project.name                              # 项目名称
+projects.agent.type                       # Agent 类型
+projects.agent.options.work_dir           # Agent 工作目录
+projects.platforms.type                   # 平台类型
+projects.platforms.options.app_id         # 平台应用 ID
+projects.platforms.options.app_secret     # 平台应用密钥
+projects.platforms.options.allow_from     # 授权用户白名单
 ```
 
 进入团队试点前，`allow_from` 应该明确限制授权用户。
@@ -217,16 +217,15 @@ cd $env:USERPROFILE\fde-demo
 创建 `sources/example.md`：
 
 ```markdown
-# Example Company SOP
+# 示例公司 SOP
 
-## P0 Incident Response
+## P0 事故响应流程
 
-For P0 incidents, create an incident channel, assign an owner, check dashboards,
-and post updates every 15 minutes.
+发生 P0 事故时，创建事故群，指定唯一负责人，检查监控面板，并每 15 分钟同步一次进展。
 
-## External SaaS Subscription
+## 外部 SaaS 订阅
 
-Employees should confirm with finance before subscribing to external SaaS tools.
+员工订阅外部 SaaS 工具前，应先向财务确认报销和续费规则。
 ```
 
 编译：
@@ -273,15 +272,15 @@ Skills 把基础设施转化成业务工作流。
 触发：
 
 ```text
-Investigate this failed request: trace_id=xxx
+排查这个失败请求：trace_id=xxx
 ```
 
 流程：
 
 ```text
-1. 校验 trace ID。
+1. 校验 trace_id。
 2. 查询授权日志。
-3. 识别 request path、user scope 和 error class。
+3. 识别请求路径、用户范围和错误类型。
 4. 必要时检查相关指标。
 5. 输出诊断结论和下一步动作。
 6. 如有需要，汇报到授权群聊。
@@ -292,17 +291,17 @@ Investigate this failed request: trace_id=xxx
 触发：
 
 ```text
-Verify this API change before delivery.
+这个 API 改动准备交付，帮我做一次验收。
 ```
 
 流程：
 
 ```text
-1. 读取需求和 API path。
+1. 读取需求和 API 路径。
 2. 运行测试。
-3. 发送 smoke request。
+3. 发送冒烟请求。
 4. 检查日志和指标。
-5. 输出 pass / fail / risk 报告。
+5. 输出通过 / 失败 / 风险报告。
 ```
 
 ### 内容审核 Skill
@@ -310,7 +309,7 @@ Verify this API change before delivery.
 触发：
 
 ```text
-Review this batch of user-generated content.
+审核这一批用户内容。
 ```
 
 流程：
@@ -328,7 +327,7 @@ Review this batch of user-generated content.
 触发：
 
 ```text
-Summarize recent competitor activity.
+总结最近的竞品动态。
 ```
 
 流程：
@@ -346,17 +345,17 @@ Summarize recent competitor activity.
 触发：
 
 ```text
-Run the release checklist.
+执行发布检查清单。
 ```
 
 流程：
 
 ```text
-1. 读取已批准 SOP。
+1. 读取已批准的 SOP。
 2. 检查必要项目。
 3. 确认负责人。
 4. 确认回滚和监控方案。
-5. 输出 go / no-go 摘要。
+5. 输出发布 / 暂停发布摘要。
 ```
 
 ### Wiki 更新 Skill
@@ -364,15 +363,15 @@ Run the release checklist.
 触发：
 
 ```text
-Convert this incident review into wiki updates.
+把这次事故复盘整理成 Wiki 更新。
 ```
 
 流程：
 
 ```text
-1. 提取 timeline、impact、cause 和 fix。
-2. 起草 postmortem。
-3. 起草可复用 Incident Pattern。
+1. 提取时间线、影响范围、原因和修复动作。
+2. 起草复盘文档。
+3. 起草可复用的事故模式。
 4. 提交人工 review。
 5. 审批后发布。
 ```
@@ -389,12 +388,12 @@ Convert this incident review into wiki updates.
 
 - 专用 OS 用户或隔离服务器
 - 专用工作目录
-- Chat allowlist
-- Source document allowlist
+- 聊天白名单
+- 源文档白名单
 - 第一次集成优先只读
 - Wiki 发布前必须人工 review
-- Sources 中不放 secrets、credentials、contracts、salary、private customer data
-- Unknown-question capture process
+- 源文档中不放密钥、凭证、合同、工资、客户隐私数据
+- 未知问题捕获流程
 - 定期 wiki lint 和 review
 
 验证：
@@ -403,31 +402,31 @@ Convert this incident review into wiki updates.
 Agent 能回答已知问题，拒绝未文档化问题，并只在预期数据边界内运行。
 ```
 
-## LLM Wiki vs Direct RAG
+## LLM Wiki vs 直接 RAG
 
-| Dimension | Direct RAG | LLM Wiki |
+| 维度 | 直接 RAG | LLM Wiki |
 |---|---|---|
-| Knowledge form | Query-time chunks | Precompiled Markdown pages |
-| Reviewability | Usually answer-level only | Wiki pages can be reviewed before use |
-| Source traceability | Depends on retrieval | Built into pages and citations |
-| Reuse | Re-discovered per query | Accumulates as stable knowledge assets |
-| Best for | Large ad-hoc search | SOPs, policies, incident reviews, manuals |
-| Main risk | Plausible but unapproved answers | Slower setup, stronger control |
+| 知识形态 | 查询时临时检索 chunks | 预先编译成 Markdown 页面 |
+| 可审查性 | 通常只能审查最终回答 | Wiki 页面可在使用前审查 |
+| 来源追溯 | 依赖检索结果 | 页面和引用中内置来源 |
+| 复用性 | 每次查询重新发现 | 持续沉淀为稳定知识资产 |
+| 适用场景 | 大规模临时搜索 | SOP、制度、复盘、手册 |
+| 主要风险 | 回答看似合理但未被批准 | 前期设置较慢，但控制更强 |
 
 FDE-Kit 不替代 RAG。它定义的是：什么时候企业知识应该先变成可审查资产，再交给 Agent 使用。
 
-## Delivery Checklist
+## 交付检查清单
 
 ```text
-[ ] Step 0: Local Agent works inside a test directory
-[ ] Step 1: cc-connect bridges chat to the Agent
-[ ] Step 2: Agent can access one approved test document
-[ ] Step 3: LLM Wiki compiles and answers from reviewed content
-[ ] Step 4: One enterprise Skill completes a real workflow
-[ ] Step 5: Permissions, review, and operations are documented
+[ ] Step 0: 本地 Agent 能在测试目录内运行
+[ ] Step 1: cc-connect 能把聊天平台桥接到 Agent
+[ ] Step 2: Agent 能访问一份授权测试文档
+[ ] Step 3: LLM Wiki 能编译，并基于已审查内容回答
+[ ] Step 4: 至少一个企业 Skill 能完成真实工作流
+[ ] Step 5: 权限、审查和运营流程已文档化
 ```
 
-## Public Safety Baseline
+## 公开安全基线
 
 公开示例只使用通用数据。
 
@@ -438,11 +437,11 @@ FDE-Kit 不替代 RAG。它定义的是：什么时候企业知识应该先变�
 - 生产路径
 - 员工信息
 - 客户信息
-- secrets 或 credentials
+- 密钥或凭证
 - 原始事故记录
 - 未发布商业计划
 
-## Scope
+## 范围
 
 FDE-Kit 是 FDE 风格企业 AI 工作台项目的部署指南和运行模型。
 
@@ -455,7 +454,7 @@ FDE-Kit 是 FDE 风格企业 AI 工作台项目的部署指南和运行模型。
 
 暂不包含：
 
-- SaaS UI
+- SaaS 界面
 - 一键安装脚本
 - 自动导入未经审查的公司文档
 - 对未批准来源的回答正确性保证
