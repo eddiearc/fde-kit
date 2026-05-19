@@ -4,6 +4,8 @@ Enterprise AI workbench deployment guide for Forward Deployed Engineers.
 
 FDE-Kit documents a staged path for turning a local coding Agent into a team-accessible enterprise AI assistant. It combines a local Agent runtime, `cc-connect`, office-platform CLIs, `llm-wiki-compiler`, and customer-specific Skills into one controlled deployment workflow.
 
+中文版本：[README.md](README.md)
+
 ## System Overview
 
 ```mermaid
