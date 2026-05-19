@@ -78,7 +78,7 @@ Recommended options:
 
 - Claude Code
 - Codex
-- Claude Code with a lower-cost model provider for cost-sensitive enterprise use
+- Claude Code with a lower-cost model provider for cost-sensitive enterprise use, such as DeepSeek, GLM, or Kimi
 
 Claude Code:
 
@@ -161,6 +161,16 @@ Implementation note: this guide has been validated with Feishu first. Other supp
 The chat bridge makes the Agent reachable. Enterprise data access makes it useful.
 
 Install the CLI, MCP server, or internal tool adapter for the selected office platform. The first integration should be read-only and limited to an approved test space.
+
+For Feishu/Lark:
+
+```bash
+npm install -g @larksuite/cli
+lark-cli --help
+lark-cli config init
+lark-cli auth login
+lark-cli doctor
+```
 
 Typical capabilities:
 
