@@ -2,7 +2,7 @@
 
 面向 Forward Deployed Engineer（FDE）的企业 AI 工作台部署指南。
 
-FDE-Kit 记录了一条分阶段的部署路线：把本地 AI Agent 变成团队可访问、可审查、可治理的企业 AI 助手。它把本地 Agent Runtime、`cc-connect`、办公平台 CLI、`llm-wiki-compiler` 和企业定制 Skills 串成一套可交付流程。
+FDE-Kit 记录了一条分阶段的部署路线：把本地 AI Agent 变成团队可访问、可审查、可治理的企业 AI 助手。它把本地 Agent Runtime、协作入口 Bridge、办公平台 CLI、`llm-wiki-compiler` 和企业定制 Skills 串成一套可交付流程。
 
 English version: [README.en.md](README.en.md)
 
@@ -11,11 +11,8 @@ English version: [README.en.md](README.en.md)
 ```mermaid
 flowchart LR
   User[员工] --> Chat[飞书 / 企微 / 钉钉]
-  Chat --> Bridge{Chat Bridge}
-  Bridge -->|多平台| cc[cc-connect]
-  Bridge -->|飞书专精| lark[lark-channel-bridge]
-  cc --> Agent[本地 AI Agent]
-  lark --> Agent
+  Chat --> Bridge[Bridge: cc-connect / lark-channel-bridge]
+  Bridge --> Agent[本地 AI Agent]
   Agent --> Platform[办公平台 CLI]
   Agent --> Wiki[已审查 LLM Wiki]
   Agent --> Skills[企业 Skills]
@@ -35,7 +32,7 @@ flowchart LR
 
 ```text
 Step 0  本地 Agent Runtime
-Step 1  Chat Bridge
+Step 1  协作入口 Bridge
 Step 2  企业数据访问
 Step 3  LLM Wiki
 Step 4  企业 Skills
@@ -98,13 +95,19 @@ claude --version
 Agent 能在一个专用测试目录内读写文件、执行任务。
 ```
 
-## Step 1：Chat Bridge
+## Step 1：协作入口 Bridge
 
-Chat Bridge 把本地 Agent 暴露给团队聊天平台。根据目标平台选择：
+Bridge 用来把本地 Agent 暴露给团队聊天平台。这里不要默认只有一种方案，按客户的办公平台选择。
 
-### 方案 A：cc-connect（多平台通用）
+### 方案 A：cc-connect（通用多平台）
 
-`cc-connect` 支持飞书、企微、钉钉、Slack、Telegram、Discord 等多平台。
+`cc-connect` 适合多平台、多 Agent 的通用 FDE 交付。
+
+适合场景：
+
+- 客户不只使用飞书，还可能使用企微、钉钉或其他聊天平台
+- 需要同时桥接 Claude Code、Codex、Gemini CLI、Cursor、OpenCode 等不同 Agent Runtime
+- 需要一套跨平台的标准接入层
 
 安装：
 
@@ -157,64 +160,79 @@ projects.platforms.options.allow_from     # 授权用户白名单
 cc-connect --config ./cc-connect.toml
 ```
 
-### 方案 B：lark-channel-bridge（飞书专精）
-
-如果只用飞书，`lark-channel-bridge` 提供更好的飞书原生体验。
-
-优势（相比 cc-connect）：
-
-- QR 码一键创建飞书 PersonalAgent 应用，无需手动去开放平台配置
-- 流式卡片：Claude 回复实时更新在一张飞书卡片上，不用等整段回复
-- 多 workspace：`/ws` 切换项目目录，每个聊天独立 session
-- 内置访问控制：`allowedUsers` / `allowedChats` / `admins` 三层白名单
-- 消息中断 + 合并：新消息能打断正在跑的任务，连续发消息合并成一次请求
-
-安装：
-
-```bash
-npm install -g lark-channel-bridge
-```
-
-启动：
-
-```bash
-lark-channel-bridge start
-```
-
-首次运行会显示 QR 码，扫码即可绑定飞书 PersonalAgent 应用。
-
-在飞书 Developer Console 确认权限和事件订阅：
-
-权限：`im:message`、`im:message:send_as_bot`、`im:resource`
-
-事件：`im.message.receive_v1`、`card.action.trigger`
-
-访问控制（通过飞书内 `/config` 设置）：
-
-```text
-allowedUsers    # 允许对话的用户 open_id 列表
-allowedChats    # 允许触发回复的群聊 chat_id 列表（DM 始终放行）
-admins          # 可执行 /config、/cd、/ws 等管理命令的用户
-```
-
-### 方案选择
-
-| 维度 | cc-connect | lark-channel-bridge |
-|---|---|---|
-| 支持平台 | 飞书、企微、钉钉、Slack 等 | 仅飞书 |
-| 首次配置 | 手动建应用 + 配事件 | QR 码扫码即用 |
-| 回复体验 | 等整段回复完 | 流式卡片实时更新 |
-| 访问控制 | allow_from 白名单 | 三层白名单（用户/群聊/管理员） |
-| Session 管理 | 无内置 | 每聊独立 session + workspace |
-| 适用场景 | 多平台团队 | 飞书为主的个人或小团队 |
-
 验证：
 
 ```text
 用户能从聊天平台发送消息，并收到本地 Agent 的回复。
 ```
 
-注意：两个方案都只支持 IM 聊天消息（群聊/私聊），不支持飞书文档内的 @ 机器人。
+实现说明：这份指南优先验证飞书路径。其他平台虽然由 `cc-connect` 支持，但需要按对应平台单独验证。
+
+### 方案 B：lark-channel-bridge（飞书专精）
+
+如果客户主要使用飞书，`lark-channel-bridge` 更适合作为首选 Bridge。它的目标不是跨平台，而是把本地 Claude Code 更深地接入飞书使用场景。
+
+适合场景：
+
+- 客户主要工作入口是飞书
+- 希望通过扫码向导快速创建或绑定飞书应用
+- 希望在飞书里看到流式卡片，而不是等待整段回复完成
+- 需要按聊天、话题或 workspace 管理 Claude Code 会话
+- 需要在飞书云文档评论里 @bot，并让 Agent 回到同一个评论线程
+- 需要内置访问控制，限制哪些人、哪些群、哪些管理员可以调用 Agent
+
+安装：
+
+```bash
+npm install -g lark-channel-bridge
+lark-channel-bridge --help
+```
+
+首次运行：
+
+```bash
+lark-channel-bridge run
+```
+
+首次运行会打开二维码向导，用飞书扫码后选择或创建 PersonalAgent 应用，凭证会写入本地配置。
+
+常用命令：
+
+```text
+/ws list        查看 workspace
+/ws save <name> 保存当前工作目录为 workspace
+/ws use <name>  切换 workspace
+/cd <path>      切换工作目录
+/status         查看当前会话状态
+/config         配置回复模式、访问控制等选项
+/stop           中断当前运行
+/doctor         让 Agent 读取近期日志并自诊断
+```
+
+访问控制：
+
+```text
+allowedUsers   # 允许调用 Agent 的用户 open_id 列表
+allowedChats   # 允许触发 Agent 的群 chat_id 列表
+admins         # 允许修改配置、切换 workspace、执行管理命令的管理员列表
+```
+
+生产或客户环境中，应该至少配置 `allowedUsers` 或 `allowedChats`。如果不配置，任何能 DM 机器人或在群里 @机器人的人，都可能触发本地 Agent。
+
+验证：
+
+```text
+用户能在飞书私聊、群聊 @bot、或云文档评论 @bot，并收到本地 Claude Code 的回复。
+```
+
+选型建议：
+
+```text
+只做飞书客户 Demo：优先 lark-channel-bridge
+做跨平台 FDE 交付：优先 cc-connect
+需要飞书文档评论 @bot：优先 lark-channel-bridge
+需要企微/钉钉/多 Agent Runtime：优先 cc-connect
+```
 
 ## Step 2：企业数据访问
 
@@ -477,7 +495,7 @@ FDE-Kit 不替代 RAG。它定义的是：什么时候企业知识应该先变�
 
 ```text
 [ ] Step 0: 本地 Agent 能在测试目录内运行
-[ ] Step 1: cc-connect 能把聊天平台桥接到 Agent
+[ ] Step 1: 已选择 Bridge，聊天平台能桥接到 Agent
 [ ] Step 2: Agent 能访问一份授权测试文档
 [ ] Step 3: LLM Wiki 能编译，并基于已审查内容回答
 [ ] Step 4: 至少一个企业 Skill 能完成真实工作流
