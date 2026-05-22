@@ -11,8 +11,11 @@ FDE-Kit documents a staged path for turning a local coding Agent into a team-acc
 ```mermaid
 flowchart LR
   User[Employee] --> Chat[Feishu / WeCom / DingTalk]
-  Chat --> Bridge[cc-connect]
-  Bridge --> Agent[Local Agent]
+  Chat --> Bridge{Chat Bridge}
+  Bridge -->|Multi-platform| cc[cc-connect]
+  Bridge -->|Feishu-native| lark[lark-channel-bridge]
+  cc --> Agent[Local Agent]
+  lark --> Agent
   Agent --> Platform[Office Platform CLI]
   Agent --> Wiki[Reviewed LLM Wiki]
   Agent --> Skills[Enterprise Skills]
@@ -97,7 +100,11 @@ The Agent can operate inside a dedicated test directory.
 
 ## Step 1: Chat Bridge
 
-`cc-connect` exposes the local Agent to team chat.
+Chat Bridge exposes the local Agent to team chat. Choose based on your target platform:
+
+### Option A: cc-connect (Multi-platform)
+
+`cc-connect` supports Feishu, WeCom, DingTalk, Slack, Telegram, Discord, and more.
 
 Install:
 
@@ -150,13 +157,64 @@ Start:
 cc-connect --config ./cc-connect.toml
 ```
 
+### Option B: lark-channel-bridge (Feishu-native)
+
+For Feishu-only deployments, `lark-channel-bridge` provides a better native experience.
+
+Advantages over cc-connect:
+
+- QR code one-click Feishu PersonalAgent creation — no manual app setup required
+- Streaming cards: Claude responses update in real time on a single Feishu card
+- Multiple workspaces: `/ws` to switch project directories, with per-chat sessions
+- Built-in access control: `allowedUsers` / `allowedChats` / `admins` three-tier allowlist
+- Message preempt + coalesce: new messages interrupt the running task, rapid-fire messages merge into one request
+
+Install:
+
+```bash
+npm install -g lark-channel-bridge
+```
+
+Start:
+
+```bash
+lark-channel-bridge start
+```
+
+On first run, a QR code appears — scan it to bind a Feishu PersonalAgent app.
+
+Confirm permissions and event subscriptions in Feishu Developer Console:
+
+Permissions: `im:message`, `im:message:send_as_bot`, `im:resource`
+
+Events: `im.message.receive_v1`, `card.action.trigger`
+
+Access control (via `/config` inside Feishu):
+
+```text
+allowedUsers    # User open_ids allowed to chat with the bot
+allowedChats    # Chat IDs where bot responds (DMs always allowed)
+admins          # Users who can run /config, /cd, /ws, etc.
+```
+
+### Choosing a Chat Bridge
+
+| Dimension | cc-connect | lark-channel-bridge |
+|---|---|---|
+| Platforms | Feishu, WeCom, DingTalk, Slack, etc. | Feishu only |
+| First-time setup | Manual app creation + event config | QR code scan |
+| Response UX | Wait for full reply | Streaming card updates |
+| Access control | allow_from allowlist | Three-tier allowlist (users / chats / admins) |
+| Session management | None built-in | Per-chat sessions + workspace switching |
+| Best for | Multi-platform teams | Feishu-first personal or small team use |
+
 Verification:
 
 ```text
 A user can send a message from the chat platform and receive a response from the local Agent.
 ```
 
-Implementation note: this guide has been validated with Feishu first. Other supported platforms should be verified independently.
+Note: both options only support IM chat messages (group / DM). @-mentioning the bot inside Feishu documents is not supported.
 
 ## Step 2: Enterprise Data Access
 

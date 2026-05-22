@@ -11,8 +11,11 @@ English version: [README.en.md](README.en.md)
 ```mermaid
 flowchart LR
   User[员工] --> Chat[飞书 / 企微 / 钉钉]
-  Chat --> Bridge[cc-connect]
-  Bridge --> Agent[本地 AI Agent]
+  Chat --> Bridge{Chat Bridge}
+  Bridge -->|多平台| cc[cc-connect]
+  Bridge -->|飞书专精| lark[lark-channel-bridge]
+  cc --> Agent[本地 AI Agent]
+  lark --> Agent
   Agent --> Platform[办公平台 CLI]
   Agent --> Wiki[已审查 LLM Wiki]
   Agent --> Skills[企业 Skills]
@@ -97,7 +100,11 @@ Agent 能在一个专用测试目录内读写文件、执行任务。
 
 ## Step 1：Chat Bridge
 
-`cc-connect` 用来把本地 Agent 暴露给团队聊天平台。
+Chat Bridge 把本地 Agent 暴露给团队聊天平台。根据目标平台选择：
+
+### 方案 A：cc-connect（多平台通用）
+
+`cc-connect` 支持飞书、企微、钉钉、Slack、Telegram、Discord 等多平台。
 
 安装：
 
@@ -150,13 +157,64 @@ projects.platforms.options.allow_from     # 授权用户白名单
 cc-connect --config ./cc-connect.toml
 ```
 
+### 方案 B：lark-channel-bridge（飞书专精）
+
+如果只用飞书，`lark-channel-bridge` 提供更好的飞书原生体验。
+
+优势（相比 cc-connect）：
+
+- QR 码一键创建飞书 PersonalAgent 应用，无需手动去开放平台配置
+- 流式卡片：Claude 回复实时更新在一张飞书卡片上，不用等整段回复
+- 多 workspace：`/ws` 切换项目目录，每个聊天独立 session
+- 内置访问控制：`allowedUsers` / `allowedChats` / `admins` 三层白名单
+- 消息中断 + 合并：新消息能打断正在跑的任务，连续发消息合并成一次请求
+
+安装：
+
+```bash
+npm install -g lark-channel-bridge
+```
+
+启动：
+
+```bash
+lark-channel-bridge start
+```
+
+首次运行会显示 QR 码，扫码即可绑定飞书 PersonalAgent 应用。
+
+在飞书 Developer Console 确认权限和事件订阅：
+
+权限：`im:message`、`im:message:send_as_bot`、`im:resource`
+
+事件：`im.message.receive_v1`、`card.action.trigger`
+
+访问控制（通过飞书内 `/config` 设置）：
+
+```text
+allowedUsers    # 允许对话的用户 open_id 列表
+allowedChats    # 允许触发回复的群聊 chat_id 列表（DM 始终放行）
+admins          # 可执行 /config、/cd、/ws 等管理命令的用户
+```
+
+### 方案选择
+
+| 维度 | cc-connect | lark-channel-bridge |
+|---|---|---|
+| 支持平台 | 飞书、企微、钉钉、Slack 等 | 仅飞书 |
+| 首次配置 | 手动建应用 + 配事件 | QR 码扫码即用 |
+| 回复体验 | 等整段回复完 | 流式卡片实时更新 |
+| 访问控制 | allow_from 白名单 | 三层白名单（用户/群聊/管理员） |
+| Session 管理 | 无内置 | 每聊独立 session + workspace |
+| 适用场景 | 多平台团队 | 飞书为主的个人或小团队 |
+
 验证：
 
 ```text
 用户能从聊天平台发送消息，并收到本地 Agent 的回复。
 ```
 
-实现说明：这份指南优先验证飞书路径。其他平台虽然由 `cc-connect` 支持，但需要按对应平台单独验证。
+注意：两个方案都只支持 IM 聊天消息（群聊/私聊），不支持飞书文档内的 @ 机器人。
 
 ## Step 2：企业数据访问
 
