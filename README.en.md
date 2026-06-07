@@ -259,10 +259,45 @@ Typical capabilities:
 - Send progress reports to approved chats
 - Upload generated files or images
 
-Verification:
+### External Web / System Operations: OpenCLI
+
+Many enterprise AI deployments do not start with clean API access. More often, the critical workflow already lives inside a web admin console, SaaS product, public website, or legacy management system. The FDE needs the Agent to read pages, operate forms, download materials, organize results, and hand high-risk actions back to a human for confirmation.
+
+`OpenCLI` exposes websites and browser operations as an Agent-callable CLI.
+
+Install and check:
+
+```bash
+npm install -g @jackwener/opencli
+opencli --help
+opencli list
+```
+
+Good fits:
+
+- Public web research and page reading.
+- Competitor monitoring, lead collection, job/product/content page extraction.
+- Repetitive workflows in existing SaaS or admin systems.
+- Browser-automation PoCs when APIs are unavailable or too expensive to integrate.
+
+Safety boundary:
+
+- Do not bypass login, permissions, rate limits, anti-abuse systems, or paywalls.
+- Do not bulk-collect sensitive or unauthorized data.
+- Require human confirmation for high-risk writes such as payment, deletion, contract submission, or external messaging.
+- When reusing login state, prefer isolated site sessions instead of polluting the user's personal browser profile.
+
+Validation:
 
 ```text
-The Agent can read one approved test document and send one test report to one approved chat.
+The Agent can use OpenCLI to read an approved web page, extract structured information, and produce a reviewable summary.
+For writes or submissions, it must first produce a preview and wait for human confirmation.
+```
+
+Step 2 validation:
+
+```text
+The Agent can read one approved test document, read one approved web page, and send one test report to one approved chat.
 ```
 
 ## Step 3: LLM Wiki
@@ -411,10 +446,34 @@ Procedure:
 
 ```text
 1. Read approved keywords and competitors.
-2. Search public sources.
+2. Use OpenCLI / search tools to read public sources.
 3. Extract titles, engagement, and claims.
 4. Cluster topics.
 5. Produce a report for the approved chat.
+```
+
+### Browser Automation Skill / OpenCLI
+
+Trigger:
+
+```text
+Turn the pending leads in this web admin console into a follow-up table.
+```
+
+Procedure:
+
+```text
+1. Confirm the target website, account permissions, and allowed operation scope.
+2. Use OpenCLI to read pages, tables, search results, or admin lists.
+3. Extract structured fields and produce a reviewable table or report.
+4. For any write, submission, deletion, payment, or outbound message, produce a preview first.
+5. Wait for human confirmation before executing high-risk writes.
+```
+
+Good PoC target:
+
+```text
+Legacy admin systems, SaaS products, and public websites without APIs can still be used to validate workflow value through browser automation.
 ```
 
 ### SOP Execution Skill
