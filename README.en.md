@@ -453,6 +453,34 @@ Procedure:
 5. Publish only after approval.
 ```
 
+### Short Video Production Skill / MoneyPrinterTurbo
+
+`MoneyPrinterTurbo` is a short-video automation pipeline: given a topic or keyword, it can generate a script, find copyright-free stock footage, synthesize voiceover, generate subtitles and background music, then render a short video.
+
+Repository: <https://github.com/harry0703/MoneyPrinterTurbo>
+
+It belongs in Step 4 as an optional content-production workflow tool, not as core enterprise AI workbench infrastructure.
+
+Good fits:
+
+- Generate short-video drafts in batches for topic testing.
+- Turn company knowledge, product selling points, or SOPs into low-cost video material.
+- Use it as an FDE workflow example: LLM script generation → material retrieval → TTS → subtitles → video rendering.
+
+Poor fits:
+
+- Content that depends on strong personal style, on-camera expression, or trust building.
+- Enterprise content that needs strict fact checking or approved media assets.
+- Directly publishing unaudited AI-generated videos at scale.
+
+Minimum validation:
+
+```text
+Input one business topic and generate one 30-60 second vertical video draft.
+Human-review the script, footage, subtitles, and factual accuracy.
+Only include it in a production Skill if the editing cost is lower than making the video from scratch.
+```
+
 Verification:
 
 ```text
